@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export interface Todo {
   id: string;
@@ -9,10 +9,33 @@ export interface Todo {
   createdAt: Date;
 }
 
+const STORAGE_KEY = 'moltbot-todos';
+
 export default function TodoList() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
+  const [mounted, setMounted] = useState(false);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        setTodos(JSON.parse(saved));
+      } catch (e) {
+        console.error('Failed to parse todos from localStorage');
+      }
+    }
+    setMounted(true);
+  }, []);
+
+  // Save to localStorage on todos change
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+    }
+  }, [todos, mounted]);
 
   const addTodo = (e: React.FormEvent) => {
     e.preventDefault();
