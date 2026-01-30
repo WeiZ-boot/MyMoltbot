@@ -1,0 +1,43 @@
+name: Weather Notifications
+
+on:
+  schedule:
+    # Run every hour
+    - cron: '0 * * * *'
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  weather-notifications:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Get Weather and Notify
+        run: |
+          # Get Beijing weather
+          echo "=== 北京天气 ===" >> weather_report.txt
+          curl -s "wttr.in/Beijing?format=3" >> weather_report.txt || echo "北京天气获取失败" >> weather_report.txt
+          echo "" >> weather_report.txt
+          
+          # Get Shanghai weather
+          echo "=== 上海天气 ===" >> weather_report.txt
+          curl -s "wttr.in/Shanghai?format=3" >> weather_report.txt || echo "上海天气获取失败" >> weather_report.txt
+          echo "" >> weather_report.txt
+          
+          # Get Singapore weather
+          echo "=== 新加坡天气 ===" >> weather_report.txt
+          curl -s "wttr.in/Singapore?format=3" >> weather_report.txt || echo "新加坡天气获取失败" >> weather_report.txt
+          echo "" >> weather_report.txt
+          
+          # Display weather report
+          cat weather_report.txt
+          
+          # Post to Discord (if webhook is configured)
+          if [ -n "${{ secrets.DISCORD_WEBHOOK_URL }}" ]; then
+            curl -X POST -H "Content-Type: application/json" \
+              -d "{\"content\":\"$(cat weather_report.txt)\"}" \
+              "${{ secrets.DISCORD_WEBHOOK_URL }}"
+          fi
